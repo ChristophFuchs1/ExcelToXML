@@ -1,0 +1,69 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text; // Import für Text-Klasse
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+public class ExcelToXML {
+    public static void main(String[] args) {
+        try {
+            FileInputStream excelFile = new FileInputStream(new File("Eingabe.xlsx"));
+            Workbook workbook = new XSSFWorkbook(excelFile);
+
+            // Wähle das einzige Blatt in der Excel-Datei (Index 0)
+            Sheet sheet = workbook.getSheetAt(0);
+
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+            Document xmlDocument = docBuilder.newDocument();
+            Element rootElement = xmlDocument.createElement("Data");
+            xmlDocument.appendChild(rootElement);
+
+            Element sheetElement = xmlDocument.createElement("Sheet"); // Benenne die Tabelle nach Bedarf
+            rootElement.appendChild(sheetElement);
+
+            for (Row row : sheet) {
+                Element rowElement = xmlDocument.createElement("Row");
+                sheetElement.appendChild(rowElement);
+
+                for (Cell cell : row) {
+                    Element cellElement = xmlDocument.createElement("Cell");
+                    rowElement.appendChild(cellElement);
+
+                    // Füge den Zellwert hinzu
+                    Text cellValue = xmlDocument.createTextNode(cell.toString());
+                    cellElement.appendChild(cellValue);
+
+                    // Füge einen Zeilenumbruch nach jedem schließenden `>`-Tag hinzu
+                    
+                   
+                    
+                    Text lineBreak = xmlDocument.createTextNode("\n");
+                    rowElement.appendChild(lineBreak);
+                }
+            }
+
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            DOMSource source = new DOMSource(xmlDocument);
+            FileOutputStream xmlFile = new FileOutputStream("Ausgabe.xml");
+            StreamResult result = new StreamResult(xmlFile);
+            transformer.transform(source, result);
+
+            System.out.println("Excel-Datei wurde erfolgreich in XML konvertiert.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
